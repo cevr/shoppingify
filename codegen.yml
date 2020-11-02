@@ -1,0 +1,16 @@
+schema: "src/schema/schema.graphql"
+hooks:
+  afterOneFileWrite: prettier --write
+generates:
+  src/generated/graphql.ts:
+    documents: "src/**/!(*.gen).{ts,tsx}"
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-graphql-request"
+    config:
+      preResolveTypes: true
+      strict: true
+      avoidOptionals: true
+      scalars:
+          Upload: 'File'
