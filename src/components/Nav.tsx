@@ -1,16 +1,7 @@
 import * as React from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import {
-  Badge,
-  Box,
-  Flex,
-  Icon,
-  IconButton,
-  Image,
-  Stack,
-  Tooltip,
-} from "@chakra-ui/core";
+import { Tooltip } from "@chakra-ui/core";
 import { MdList, MdReplay, MdAssessment, MdShoppingCart } from "react-icons/md";
 
 import { useActiveList } from "@shared/index";
@@ -18,13 +9,19 @@ import { useActiveList } from "@shared/index";
 export let Nav = () => {
   let router = useRouter();
   let activeList = useActiveList();
+
+  let itemsLeft = activeList?.items.filter((item) => !item.complete).length;
   return (
     <>
-      <Flex px="3" justifyContent="center">
-        <Image rounded="full" src="/logo.svg" alt="Logo" />
-      </Flex>
+      <div className="flex px-2 justify-center">
+        <img
+          className="rounded-full h-auto w-full"
+          src="/logo.svg"
+          alt="Logo"
+        />
+      </div>
 
-      <Stack spacing={5} shouldWrapChildren>
+      <div>
         <NavItem
           label="items"
           href="/items"
@@ -43,60 +40,58 @@ export let Nav = () => {
           active={router.asPath === "/statistics"}
           icon={MdAssessment}
         />
-      </Stack>
-      <Flex justifyContent="center" position="relative">
-        <IconButton
-          aria-label="active list"
-          icon={<MdShoppingCart />}
-          height="10"
-          width="10"
-          rounded="full"
-          bg="orange.500"
-          color="white"
-          padding="2"
-          _hover={{
-            backgroundColor: "orange.300"
-          }}
-        />
-        {activeList && activeList.items.length > 0 ? (
-          <Badge colorScheme="red" position="absolute" top="0" right="4">
-            {activeList.items.length}
-          </Badge>
+      </div>
+      <div className="flex justify-center relative p-2">
+        <button className="rounded-full bg-brand-primary flex items-center justify-center h-12 w-12 text-white hover:bg-orange-300">
+          <MdShoppingCart className="h-6 w-6" />
+        </button>
+        {itemsLeft ? (
+          <span
+            className="absolute text-xs p-1 rounded-md bg-red-600 text-white top-0 right-0"
+            style={{
+              padding: "2px 8px",
+              right: "0.25rem",
+            }}
+          >
+            {itemsLeft}
+          </span>
         ) : null}
-      </Flex>
+      </div>
     </>
   );
 };
 
 interface NavItemProps {
   active?: boolean;
-  icon: React.ElementType;
+  icon: React.FC<any>;
   href: string;
   label: string;
 }
 
-let NavItem: React.FC<NavItemProps> = ({ active, icon, href, label }) => {
+let NavItem: React.FC<NavItemProps> = ({ active, icon: Icon, href, label }) => {
   return (
-    <Flex position="relative" justifyContent="center" height="12">
+    <div className="relative flex justify-center h-12">
       {active ? (
-        <Box
-          bg="orange.500"
-          width="6px"
-          height="100%"
-          position="absolute"
-          borderRadius="0 4px 4px 0"
-          left={0}
+        <div
+          className="bg-brand-primary flex-1 absolute left-0"
+          style={{ width: "6px", borderRadius: "0 4px 4px 0" }}
         />
       ) : null}
       <Link href={href}>
         <a>
-          <Tooltip label={label} aria-label={label} hasArrow placement="right">
-            <Flex height="100%" alignItems="center" justifyContent="center">
-              <Icon as={icon} color="gray.600" height="5" width="5" />
-            </Flex>
+          <Tooltip
+            className="bg-gray-900 text-white p-2 rounded"
+            label={label}
+            aria-label={label}
+            hasArrow
+            placement="right"
+          >
+            <div className="flex flex-1 items-center justify-center">
+              <Icon className="text-gray-600 h-6 w-6 text-lg" />
+            </div>
           </Tooltip>
         </a>
       </Link>
-    </Flex>
+    </div>
   );
 };
