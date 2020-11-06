@@ -1,29 +1,41 @@
 import * as React from "react";
-import { Box, Flex, HStack } from "@chakra-ui/core";
+import { useRouter } from "next/router";
+
+import { ItemForm } from "./ItemForm";
+import { ShoppingList } from "./ShoppingList";
+import { ItemDetails } from "./ItemDetails";
+
+type Contextuals = "list" | "item" | "itemForm";
 
 export let Contextual = () => {
-  let [status, setStatus] = React.useState<"list" | "addingItem">("list");
+  let router = useRouter();
+  let [context, setContext] = React.useState<Contextuals>("list");
+
+  React.useEffect(() => {
+    if (router.query.itemId) {
+      setContext("item");
+    }
+  }, [router.query.itemId]);
 
   return (
     <>
-      {status === "list" && <ShoppingList />}
-      {status === "addingItem" && <ItemForm />}
+      {context === "list" && (
+        <ShoppingList onAddItem={() => setContext("itemForm")} />
+      )}
+      {context === "itemForm" && (
+        <ItemForm onComplete={() => setContext("list")} />
+      )}
+      {context === "item" && (
+        <ItemDetails
+          itemId={router.query.itemId as string}
+          onComplete={() => {
+            router.push({
+              query: undefined,
+            });
+            setContext("list");
+          }}
+        />
+      )}
     </>
-  );
-};
-
-let ShoppingList = () => {
-  return (
-    <Box bg="orange.100" height="100%" width="100%" padding="6">
-      <HStack></HStack>
-    </Box>
-  );
-};
-
-let ItemForm = () => {
-  return (
-    <Box>
-      <HStack></HStack>
-    </Box>
   );
 };
