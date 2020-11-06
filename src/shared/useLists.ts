@@ -1,5 +1,5 @@
 import { gql } from "graphql-request";
-import useSWR from "swr";
+import { useQuery } from "react-query";
 
 import { client } from "@lib/client";
 
@@ -11,9 +11,15 @@ export let listsQuery = gql`
       items {
         id: itemId
         name
+        count
+        complete
+        category {
+          id
+          name
+        }
       }
     }
   }
 `;
 
-export let useLists = () => useSWR("/api/lists", () => client.lists());
+export let useLists = () => useQuery("lists", () => client.lists());

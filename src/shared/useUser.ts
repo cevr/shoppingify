@@ -1,5 +1,7 @@
+import * as React from "react";
 import { gql } from "graphql-request";
-import useSWR from "swr";
+import { useQuery } from "react-query";
+import { useRouter } from "next/router";
 
 import { client } from "@lib/client";
 
@@ -13,4 +15,15 @@ export let userQuery = gql`
   }
 `;
 
-export let useUser = () => useSWR("/api/me", () => client.me());
+export let useUser = () => {
+  let router = useRouter();
+  let query = useQuery("me", () => client.me());
+
+  React.useEffect(() => {
+    if (query.data && !query.data.me) {
+      router.replace("/signin");
+    }
+  }, [query.data]);
+
+  return query;
+};
