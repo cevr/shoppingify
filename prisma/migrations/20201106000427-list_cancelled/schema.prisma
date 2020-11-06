@@ -4,7 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["connectOrCreate"]
 }
 
 model User {
@@ -24,6 +25,7 @@ model List {
   id        Int        @id @default(autoincrement())
   name      String
   completed Boolean    @default(false)
+  cancelled Boolean    @default(false)
   user      User       @relation(fields: [userId], references: [id])
   userId    Int
   /// @onDelete(CASCADE)
@@ -44,11 +46,12 @@ model Item {
 }
 
 model ListItem {
-  count  Int  @default(0)
-  item   Item @relation(fields: [itemId], references: [id])
-  itemId Int
-  list   List @relation(fields: [listId], references: [id])
-  listId Int
+  count    Int     @default(0)
+  complete Boolean @default(false)
+  item     Item    @relation(fields: [itemId], references: [id])
+  itemId   Int
+  list     List    @relation(fields: [listId], references: [id])
+  listId   Int
 
   @@id([itemId, listId])
 }
@@ -58,6 +61,5 @@ model Category {
   name   String
   user   User?  @relation(fields: [userId], references: [id])
   userId Int?
-  /// @onDelete(CASCADE)
   items  Item[]
 }
