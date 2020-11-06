@@ -1,1 +1,13 @@
 @import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap");
+
+html,
+body,
+#__next {
+  height: 100%;
+  width: 100%;
+  font-family: Quicksand, sans-serif;
+}
+
+#__next button {
+  outline: none;
+}
