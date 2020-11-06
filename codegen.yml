@@ -11,6 +11,6 @@ generates:
     config:
       preResolveTypes: true
       strict: true
-      avoidOptionals: true
+      skipTypename: true
       scalars:
           Upload: 'File'

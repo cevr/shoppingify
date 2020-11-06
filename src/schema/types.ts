@@ -1,27 +1,7 @@
-import {
-  arg,
-  objectType,
-  stringArg,
-  asNexusMethod,
-  intArg,
-} from "@nexus/schema";
+import { objectType, stringArg, intArg, booleanArg } from "@nexus/schema";
 import bcrypt from "bcrypt";
-import {
-  ApolloError,
-  AuthenticationError,
-  GraphQLUpload,
-} from "apollo-server-micro";
+import { ApolloError, AuthenticationError } from "apollo-server-micro";
 import jwt from "jsonwebtoken";
-
-export let Upload = asNexusMethod(GraphQLUpload!, "upload");
-
-export let UploadedFile = objectType({
-  name: "UploadedFile",
-  definition(t) {
-    t.string("uri", { nullable: false });
-    t.string("filename", { nullable: false });
-  },
-});
 
 export let Category = objectType({
   name: "Category",
@@ -38,7 +18,14 @@ export let Item = objectType({
     t.string("name", { nullable: false });
     t.field("category", {
       type: Category,
-      resolve: (item: any, _args) => item["category"],
+      resolve: (item, _args, context) =>
+        context.prisma.item
+          .findOne({
+            where: {
+              id: item.id,
+            },
+          })
+          .category(),
     });
     t.string("note");
     t.string("image");
@@ -51,13 +38,36 @@ export let ListItem = objectType({
     t.int("itemId", { nullable: false });
     t.int("listId", { nullable: false });
     t.int("count", { nullable: false });
+    t.boolean("complete", { nullable: false });
     t.string("name", {
       nullable: false,
-      resolve: (listItem: any, _args) => listItem["item"].name,
+      resolve: (listItem, _args, context) =>
+        context.prisma.listItem
+          .findOne({
+            where: {
+              itemId_listId: {
+                itemId: listItem.itemId,
+                listId: listItem.listId,
+              },
+            },
+          })
+          .item()
+          .then((item) => item?.name) as any,
     });
     t.field("category", {
       type: Category,
-      resolve: (listItem: any, _args) => listItem["item"].category,
+      resolve: (listItem, _args, context) =>
+        context.prisma.listItem
+          .findOne({
+            where: {
+              itemId_listId: {
+                itemId: listItem.itemId,
+                listId: listItem.listId,
+              },
+            },
+          })
+          .item()
+          .category(),
     });
   },
 });
@@ -71,7 +81,14 @@ export let List = objectType({
       type: ListItem,
       list: [true],
       nullable: false,
-      resolve: (list: any, _args) => list["items"],
+      resolve: (list, _args, context) =>
+        context.prisma.list
+          .findOne({
+            where: {
+              id: list.id,
+            },
+          })
+          .items(),
     });
   },
 });
@@ -86,17 +103,38 @@ export let User = objectType({
       type: Category,
       nullable: false,
       list: [true],
-      resolve: (user: any, _args) => user["categories"],
+      resolve: (user, _args, context) =>
+        context.prisma.user
+          .findOne({
+            where: {
+              id: user.id,
+            },
+          })
+          .categories(),
     });
     t.field("items", {
       type: Item,
       list: [true],
-      resolve: (user: any, _args) => user["items"],
+      resolve: (user, _args, context) =>
+        context.prisma.user
+          .findOne({
+            where: {
+              id: user.id,
+            },
+          })
+          .items(),
     });
     t.field("lists", {
       type: List,
       list: [true],
-      resolve: (user: any, _args) => user["lists"],
+      resolve: (user, _args, context) =>
+        context.prisma.user
+          .findOne({
+            where: {
+              id: user.id,
+            },
+          })
+          .lists(),
     });
   },
 });
@@ -129,17 +167,41 @@ export let Query = objectType({
         }),
     });
 
+    t.field("item", {
+      type: Item,
+      authorize: (_parent, _args, context) => Boolean(context.user),
+      args: {
+        id: intArg({ required: true }),
+      },
+      resolve: (_parent, { id }, context) =>
+        context.prisma.item.findOne({
+          where: {
+            id,
+          },
+        }),
+    });
+
     t.field("lists", {
       type: List,
       list: [true],
       nullable: false,
       authorize: (_parent, _args, context) => Boolean(context.user),
-      resolve: (_parent, _args, context) =>
-        context.prisma.list.findMany({
+      resolve: async (_parent, _args, context) => {
+        let lists = await context.prisma.list.findMany({
           where: {
             userId: context.user?.id,
           },
-        }),
+          include: {
+            items: {
+              include: {
+                item: true,
+              },
+            },
+          },
+        });
+
+        return lists;
+      },
     });
 
     t.field("categories", {
@@ -234,11 +296,11 @@ export let Mutation = objectType({
         name: stringArg({ required: true }),
         categoryId: intArg({ required: true }),
         note: stringArg(),
-        image: arg({ type: "Upload" }),
+        image: stringArg(),
       },
       authorize: (_parent, _args, context) => Boolean(context.user),
       resolve: async (_parent, { name, categoryId, note, image }, context) => {
-        return context.prisma.item.create({
+        let item = await context.prisma.item.create({
           data: {
             name,
             note,
@@ -255,6 +317,85 @@ export let Mutation = objectType({
             },
           },
         });
+
+        let activeList = context.user?.activeListId
+          ? await context.prisma.list.findOne({
+              where: {
+                id: context.user.activeListId,
+              },
+            })
+          : null;
+
+        if (!activeList) {
+          activeList = await context.prisma.list.create({
+            data: {
+              name: "Shopping list",
+              user: {
+                connect: {
+                  id: context.user?.id,
+                },
+              },
+            },
+          });
+        }
+
+        await context.prisma.listItem.create({
+          data: {
+            item: {
+              connect: {
+                id: item.id,
+              },
+            },
+            list: {
+              connect: {
+                id: activeList.id,
+              },
+            },
+          },
+        });
+
+        await context.prisma.list.update({
+          where: {
+            id: activeList.id,
+          },
+          data: {
+            items: {
+              connect: {
+                itemId_listId: {
+                  itemId: item.id,
+                  listId: activeList.id,
+                },
+              },
+            },
+          },
+        });
+
+        await context.prisma.item.update({
+          where: {
+            id: item.id,
+          },
+          data: {
+            lists: {
+              connect: {
+                itemId_listId: {
+                  itemId: item.id,
+                  listId: activeList.id,
+                },
+              },
+            },
+          },
+        });
+
+        await context.prisma.user.update({
+          where: {
+            id: context.user?.id,
+          },
+          data: {
+            activeListId: activeList.id,
+          },
+        });
+
+        return item;
       },
     });
     t.field("updateItem", {
@@ -264,7 +405,7 @@ export let Mutation = objectType({
         name: stringArg(),
         categoryId: intArg(),
         note: stringArg(),
-        image: arg({ type: "Upload" }),
+        image: stringArg(),
       },
       authorize: (_parent, _args, context) => Boolean(context.user),
       resolve: async (
@@ -291,12 +432,12 @@ export let Mutation = objectType({
     t.field("deleteItem", {
       type: Item,
       args: {
-        itemId: intArg({ required: true }),
+        id: intArg({ required: true }),
       },
       authorize: (_parent, _args, context) => Boolean(context.user),
-      resolve: async (_parent, { itemId }, context) => {
+      resolve: async (_parent, { id }, context) => {
         let where = {
-          id: itemId,
+          id,
         };
         await context.prisma.onDelete({
           model: "Item",
@@ -353,7 +494,6 @@ export let Mutation = objectType({
         let where = {
           id,
         };
-        await context.prisma.onDelete({ model: "Category", where });
         return context.prisma.category.delete({
           where,
         });
@@ -398,16 +538,66 @@ export let Mutation = objectType({
     t.field("updateList", {
       type: List,
       args: {
-        id: intArg({ required: true }),
+        id: intArg(),
         name: stringArg(),
         add: intArg({ list: [true] }),
         delete: intArg({ list: [true] }),
       },
       authorize: (_parent, _args, context) => Boolean(context.user),
-      resolve: (_parent, { id, name, add, delete: del }, context) =>
-        context.prisma.list.update({
+      resolve: async (_parent, { id, name, add, delete: del }, context) => {
+        let listId = id;
+
+        if (!listId) {
+          listId = await context.prisma.user
+            .findOne({
+              where: {
+                id: context.user?.id,
+              },
+              select: {
+                activeListId: true,
+              },
+            })
+            .then((user) => user?.activeListId);
+        }
+
+        if (!listId) {
+          listId = await context.prisma.list
+            .create({
+              data: {
+                name: "Shopping list",
+                user: {
+                  connect: {
+                    id: context.user?.id,
+                  },
+                },
+              },
+            })
+            .then((list) => list.id);
+        }
+
+        await Promise.all(
+          add?.map(
+            async (itemId) =>
+              await context.prisma.listItem.create({
+                data: {
+                  item: {
+                    connect: {
+                      id: itemId,
+                    },
+                  },
+                  list: {
+                    connect: {
+                      id: listId as number,
+                    },
+                  },
+                },
+              })
+          ) ?? []
+        );
+
+        return context.prisma.list.update({
           where: {
-            id,
+            id: listId as number,
           },
           data: {
             name: name ?? undefined,
@@ -415,34 +605,137 @@ export let Mutation = objectType({
               connect: add?.map((itemId) => ({
                 itemId_listId: {
                   itemId,
-                  listId: id,
+                  listId: listId as number,
                 },
               })),
               delete: del?.map((itemId) => ({
                 itemId_listId: {
                   itemId,
-                  listId: id,
+                  listId: listId as number,
                 },
               })),
             },
           },
-        }),
+        });
+      },
     });
-    t.field("deleteList", {
+    t.field("completeList", {
       type: List,
       args: {
         id: intArg({ required: true }),
       },
       authorize: (_parent, _args, context) => Boolean(context.user),
       resolve: async (_parent, { id }, context) => {
-        let where = {
-          id,
-        };
-        await context.prisma.onDelete({ model: "List", where });
-        return context.prisma.list.delete({
-          where,
+        await context.prisma.user.update({
+          where: {
+            id: context.user?.id,
+          },
+          data: {
+            activeListId: null,
+          },
+        });
+
+        return await context.prisma.list.update({
+          where: {
+            id,
+          },
+          data: {
+            completed: true,
+          },
         });
       },
+    });
+    t.field("cancelList", {
+      type: List,
+      args: {
+        id: intArg({ required: true }),
+      },
+      authorize: (_parent, _args, context) => Boolean(context.user),
+      resolve: async (_parent, { id }, context) => {
+        await context.prisma.user.update({
+          where: {
+            id: context.user?.id,
+          },
+          data: {
+            activeListId: null,
+          },
+        });
+
+        return await context.prisma.list.update({
+          where: {
+            id,
+          },
+          data: {
+            cancelled: true,
+          },
+        });
+      },
+    });
+
+    t.field("incrementListItemCount", {
+      type: ListItem,
+      args: {
+        itemId: intArg({ required: true }),
+        listId: intArg({ required: true }),
+      },
+      authorize: (_parent, _args, context) => Boolean(context.user),
+      resolve: (_parent, { itemId, listId }, context) =>
+        context.prisma.listItem.update({
+          where: {
+            itemId_listId: {
+              itemId,
+              listId,
+            },
+          },
+          data: {
+            count: {
+              increment: 1,
+            },
+          },
+        }),
+    });
+    t.field("decrementListItemCount", {
+      type: ListItem,
+      args: {
+        itemId: intArg({ required: true }),
+        listId: intArg({ required: true }),
+      },
+      authorize: (_parent, _args, context) => Boolean(context.user),
+      resolve: (_parent, { itemId, listId }, context) =>
+        context.prisma.listItem.update({
+          where: {
+            itemId_listId: {
+              itemId,
+              listId,
+            },
+          },
+          data: {
+            count: {
+              decrement: 1,
+            },
+          },
+        }),
+    });
+    t.field("setListItemComplete", {
+      type: ListItem,
+      args: {
+        itemId: intArg({ required: true }),
+        listId: intArg({ required: true }),
+        complete: booleanArg({ required: true }),
+      },
+      authorize: (_parent, _args, context) => Boolean(context.user),
+      resolve: (_parent, { itemId, listId, complete }, context) =>
+        context.prisma.listItem.update({
+          where: {
+            itemId_listId: {
+              itemId,
+              listId,
+            },
+          },
+          data: {
+            complete,
+          },
+        }),
     });
   },
 });

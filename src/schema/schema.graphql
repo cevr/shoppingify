@@ -23,6 +23,7 @@ type List {
 
 type ListItem {
   category: Category
+  complete: Boolean!
   count: Int!
   itemId: Int!
   listId: Int!
@@ -30,33 +31,30 @@ type ListItem {
 }
 
 type Mutation {
+  cancelList(id: Int!): List
+  completeList(id: Int!): List
   createCategory(name: String!): Category
-  createItem(categoryId: Int!, image: Upload, name: String!, note: String): Item
+  createItem(categoryId: Int!, image: String, name: String!, note: String): Item
   createList(items: [Int!], name: String!): List
+  decrementListItemCount(itemId: Int!, listId: Int!): ListItem
   deleteCategory(id: Int!): Category
-  deleteItem(itemId: Int!): Item
-  deleteList(id: Int!): List
+  deleteItem(id: Int!): Item
+  incrementListItemCount(itemId: Int!, listId: Int!): ListItem
+  setListItemComplete(complete: Boolean!, itemId: Int!, listId: Int!): ListItem
   signin(password: String!, username: String!): User
   signout: Boolean
   signup(password: String!, username: String!): User
   updateCategory(id: Int!, name: String!): Category
-  updateItem(categoryId: Int, image: Upload, itemId: Int!, name: String, note: String): Item
-  updateList(add: [Int!], delete: [Int!], id: Int!, name: String): List
+  updateItem(categoryId: Int, image: String, itemId: Int!, name: String, note: String): Item
+  updateList(add: [Int!], delete: [Int!], id: Int, name: String): List
 }
 
 type Query {
   categories: [Category!]!
+  item(id: Int!): Item
   items: [Item!]!
   lists: [List!]!
   me: User
-}
-
-"""The `Upload` scalar type represents a file upload."""
-scalar Upload
-
-type UploadedFile {
-  filename: String!
-  uri: String!
 }
 
 type User {

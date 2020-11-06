@@ -1,4 +1,4 @@
-import { PrismaClient, PrismaClientOptions } from "@prisma/client";
+import { PrismaClient, PrismaClientOptions, User } from "@prisma/client";
 import { PrismaDelete, onDeleteArgs } from "@paljs/plugins";
 import Cookies from "cookies";
 import { IncomingMessage, ServerResponse } from "http";
@@ -18,10 +18,12 @@ export interface Context {
   res: ServerResponse;
   req: IncomingMessage;
   cookies: Cookies;
-  user?: {
-    id: number;
-  };
+  user: User | null;
   prisma: Prisma;
+}
+
+export interface UserToken {
+  id: number;
 }
 
 export let prisma = new Prisma();
