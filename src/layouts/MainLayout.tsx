@@ -1,27 +1,15 @@
 import * as React from "react";
-import { Box, Flex } from "@chakra-ui/core";
 
 import { Nav, Contextual } from "@components/index";
 
-let MainLayout: React.FC = ({ children }) => (
-  <Flex height="100vh" width="100vw">
-    <Flex
-      as="nav"
-      height="100%"
-      width={24}
-      py="8"
-      flexDir="column"
-      justifyContent="space-between"
-    >
+export let MainLayout: React.FC = ({ children }) => (
+  <div className="h-full w-full flex">
+    <nav className="w-40 sm:w-24 py-8 flex flex-col justify-between">
       <Nav />
-    </Flex>
-    <Box height="100%" width="100%" bg="gray.100" py="10" px={16}>
-      {children}
-    </Box>
-    <Box height="100%" width="390px">
+    </nav>
+    <main className="w-full bg-gray-100 p-6 md:py-10 md:px-16">{children}</main>
+    <aside style={{ minWidth: 360 }}>
       <Contextual />
-    </Box>
-  </Flex>
+    </aside>
+  </div>
 );
-
-export default MainLayout;
