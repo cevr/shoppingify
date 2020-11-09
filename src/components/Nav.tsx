@@ -1,10 +1,10 @@
 import * as React from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { Tooltip } from "@chakra-ui/core";
 import { MdList, MdReplay, MdAssessment, MdShoppingCart } from "react-icons/md";
 
 import { useActiveList } from "@shared/index";
+import { Tooltip } from "./Tooltip";
 
 export let Nav = () => {
   let router = useRouter();
@@ -80,11 +80,8 @@ let NavItem: React.FC<NavItemProps> = ({ active, icon: Icon, href, label }) => {
       <Link href={href}>
         <a>
           <Tooltip
-            className="bg-gray-900 text-white p-2 rounded"
+            // className="bg-gray-900 text-white p-2 rounded"
             label={label}
-            aria-label={label}
-            hasArrow
-            placement="right"
           >
             <div className="flex flex-1 items-center justify-center">
               <Icon className="text-gray-600 h-6 w-6 text-lg" />

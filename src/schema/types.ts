@@ -1,7 +1,17 @@
-import { objectType, stringArg, intArg, booleanArg } from "@nexus/schema";
+import {
+  objectType,
+  stringArg,
+  intArg,
+  booleanArg,
+  asNexusMethod,
+  enumType,
+} from "@nexus/schema";
 import bcrypt from "bcrypt";
 import { ApolloError, AuthenticationError } from "apollo-server-micro";
 import jwt from "jsonwebtoken";
+import { GraphQLDateTime } from "graphql-iso-date";
+
+export let Datetime = asNexusMethod(GraphQLDateTime, "date", "Date");
 
 export let Category = objectType({
   name: "Category",
@@ -72,11 +82,28 @@ export let ListItem = objectType({
   },
 });
 
+enum ListStatusEnum {
+  ACTIVE,
+  COMPLETED,
+  CANCELLED,
+}
+
+export let ListStatus = enumType({
+  name: "ListStatus",
+  members: ListStatusEnum,
+});
+
 export let List = objectType({
   name: "List",
   definition(t) {
     t.int("id", { nullable: false });
     t.string("name", { nullable: false });
+    t.field("status", {
+      type: ListStatus,
+      nullable: false,
+    });
+    t.date("createdAt", { nullable: false });
+    t.date("updatedAt", { nullable: false });
     t.field("items", {
       type: ListItem,
       list: [true],
@@ -300,135 +327,64 @@ export let Mutation = objectType({
       },
       authorize: (_parent, _args, context) => Boolean(context.user),
       resolve: async (_parent, { name, categoryId, note, image }, context) => {
-        let item = await context.prisma.item.create({
-          data: {
-            name,
-            note,
-            image,
-            category: {
-              connect: {
-                id: categoryId,
-              },
-            },
-            user: {
-              connect: {
-                id: context.user?.id,
+        let userId = context.user?.id as number;
+        let listId = context.user?.activeListId ?? undefined;
+
+        let itemCreate = {
+          create: {
+            item: {
+              create: {
+                name,
+                note,
+                image,
+                category: {
+                  connect: {
+                    id: categoryId,
+                  },
+                },
+                user: {
+                  connect: {
+                    id: userId,
+                  },
+                },
               },
             },
           },
-        });
+        };
 
-        let activeList = context.user?.activeListId
-          ? await context.prisma.list.findOne({
-              where: {
-                id: context.user.activeListId,
+        let list = !listId
+          ? await context.prisma.list.create({
+              data: {
+                name: "Shopping list",
+                user: {
+                  connect: {
+                    id: userId,
+                  },
+                },
+                items: itemCreate,
               },
             })
-          : null;
-
-        if (!activeList) {
-          activeList = await context.prisma.list.create({
-            data: {
-              name: "Shopping list",
-              user: {
-                connect: {
-                  id: context.user?.id,
-                },
+          : await context.prisma.list.update({
+              where: {
+                id: listId,
               },
-            },
-          });
-        }
-
-        await context.prisma.listItem.create({
-          data: {
-            item: {
-              connect: {
-                id: item.id,
+              data: {
+                items: itemCreate,
               },
-            },
-            list: {
-              connect: {
-                id: activeList.id,
-              },
-            },
-          },
-        });
-
-        await context.prisma.list.update({
-          where: {
-            id: activeList.id,
-          },
-          data: {
-            items: {
-              connect: {
-                itemId_listId: {
-                  itemId: item.id,
-                  listId: activeList.id,
-                },
-              },
-            },
-          },
-        });
-
-        await context.prisma.item.update({
-          where: {
-            id: item.id,
-          },
-          data: {
-            lists: {
-              connect: {
-                itemId_listId: {
-                  itemId: item.id,
-                  listId: activeList.id,
-                },
-              },
-            },
-          },
-        });
+            });
 
         await context.prisma.user.update({
           where: {
-            id: context.user?.id,
+            id: userId,
           },
           data: {
-            activeListId: activeList.id,
+            activeListId: list.id,
           },
         });
+        return list;
+      },
+    });
 
-        return item;
-      },
-    });
-    t.field("updateItem", {
-      type: Item,
-      args: {
-        itemId: intArg({ required: true }),
-        name: stringArg(),
-        categoryId: intArg(),
-        note: stringArg(),
-        image: stringArg(),
-      },
-      authorize: (_parent, _args, context) => Boolean(context.user),
-      resolve: async (
-        _parent,
-        { itemId, name, categoryId, note, image },
-        context
-      ) =>
-        context.prisma.item.update({
-          where: {
-            id: itemId,
-          },
-          data: {
-            name: name ?? undefined,
-            note: note ?? undefined,
-            image: image ?? undefined,
-            category: {
-              connect: {
-                id: categoryId ?? undefined,
-              },
-            },
-          },
-        }),
-    });
     t.field("deleteItem", {
       type: Item,
       args: {
@@ -467,23 +423,7 @@ export let Mutation = objectType({
           },
         }),
     });
-    t.field("updateCategory", {
-      type: Category,
-      args: {
-        id: intArg({ required: true }),
-        name: stringArg({ required: true }),
-      },
-      authorize: (_parent, _args, context) => Boolean(context.user),
-      resolve: (_parent, { id, name }, context) =>
-        context.prisma.category.update({
-          where: {
-            id,
-          },
-          data: {
-            name,
-          },
-        }),
-    });
+
     t.field("deleteCategory", {
       type: Category,
       args: {
@@ -500,125 +440,104 @@ export let Mutation = objectType({
       },
     });
 
-    t.field("createList", {
+    t.field("renameList", {
       type: List,
       args: {
         name: stringArg({ required: true }),
-        items: intArg({ list: [true] }),
+        listId: intArg({ required: true }),
       },
       authorize: (_parent, _args, context) => Boolean(context.user),
-      resolve: async (_parent, { name, items }, context) => {
-        let list = await context.prisma.list.create({
+      resolve: (_parent, { name, listId }, context) =>
+        context.prisma.list.update({
+          where: {
+            id: listId,
+          },
           data: {
             name,
-            user: {
-              connect: {
-                id: context.user?.id,
-              },
-            },
           },
-        });
-        return await context.prisma.list.update({
-          where: {
-            id: list.id,
-          },
-          data: {
-            items: {
-              connect: items?.map((itemId) => ({
-                itemId_listId: {
-                  itemId,
-                  listId: list.id,
-                },
-              })),
-            },
-          },
-        });
-      },
+        }),
     });
-    t.field("updateList", {
+
+    t.field("addItem", {
       type: List,
       args: {
-        id: intArg(),
-        name: stringArg(),
-        add: intArg({ list: [true] }),
-        delete: intArg({ list: [true] }),
+        itemId: intArg({ required: true }),
+        listId: intArg(),
       },
       authorize: (_parent, _args, context) => Boolean(context.user),
-      resolve: async (_parent, { id, name, add, delete: del }, context) => {
-        let listId = id;
+      resolve: async (_parent, { itemId, listId }, context) => {
+        let userId = context.user?.id as number;
+        listId = context.user?.activeListId ?? listId ?? undefined;
 
-        if (!listId) {
-          listId = await context.prisma.user
-            .findOne({
-              where: {
-                id: context.user?.id,
+        let itemCreate = {
+          create: {
+            item: {
+              connect: {
+                id: itemId,
               },
-              select: {
-                activeListId: true,
-              },
-            })
-            .then((user) => user?.activeListId);
-        }
+            },
+          },
+        };
 
-        if (!listId) {
-          listId = await context.prisma.list
-            .create({
+        let list = !listId
+          ? await context.prisma.list.create({
               data: {
                 name: "Shopping list",
                 user: {
                   connect: {
-                    id: context.user?.id,
+                    id: userId,
                   },
                 },
+                items: itemCreate,
               },
             })
-            .then((list) => list.id);
-        }
+          : await context.prisma.list.update({
+              where: {
+                id: listId,
+              },
+              data: {
+                items: itemCreate,
+              },
+            });
 
-        await Promise.all(
-          add?.map(
-            async (itemId) =>
-              await context.prisma.listItem.create({
-                data: {
-                  item: {
-                    connect: {
-                      id: itemId,
-                    },
-                  },
-                  list: {
-                    connect: {
-                      id: listId as number,
-                    },
-                  },
-                },
-              })
-          ) ?? []
-        );
-
-        return context.prisma.list.update({
+        await context.prisma.user.update({
           where: {
-            id: listId as number,
+            id: userId,
           },
           data: {
-            name: name ?? undefined,
+            activeListId: list.id,
+          },
+        });
+        return list;
+      },
+    });
+
+    t.field("removeItem", {
+      type: List,
+      args: {
+        itemId: intArg({ required: true }),
+        listId: intArg({ required: true }),
+      },
+      authorize: (_parent, _args, context) => Boolean(context.user),
+      resolve: async (_parent, { itemId, listId }, context) => {
+        return await context.prisma.list.update({
+          where: {
+            id: listId,
+          },
+          data: {
             items: {
-              connect: add?.map((itemId) => ({
+              delete: {
                 itemId_listId: {
                   itemId,
-                  listId: listId as number,
+                  listId,
                 },
-              })),
-              delete: del?.map((itemId) => ({
-                itemId_listId: {
-                  itemId,
-                  listId: listId as number,
-                },
-              })),
+              },
             },
           },
         });
       },
     });
+
     t.field("completeList", {
       type: List,
       args: {
@@ -640,7 +559,7 @@ export let Mutation = objectType({
             id,
           },
           data: {
-            completed: true,
+            status: ListStatusEnum.COMPLETED,
           },
         });
       },
@@ -666,7 +585,7 @@ export let Mutation = objectType({
             id,
           },
           data: {
-            cancelled: true,
+            status: ListStatusEnum.CANCELLED,
           },
         });
       },

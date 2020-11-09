@@ -1,13 +1,8 @@
-interface Item {
-  id: number;
-  name: string;
-  count?: number;
-  category?: {
-    name: string;
-  } | null;
-}
+import { ItemFieldsFragment, ListItemFieldsFragment } from "@generated/graphql";
 
-export let makeCategorizedItemMap = (items?: Item[]) =>
+export type Item = ItemFieldsFragment | ListItemFieldsFragment;
+
+export let makeItemsByCategory = (items?: Item[]) =>
   Object.entries(
     items?.reduce((items, item) => {
       if (item.category) {

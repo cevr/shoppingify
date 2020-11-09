@@ -6,9 +6,12 @@ import { client } from "@lib/client";
 export let categoriesQuery = gql`
   query categories {
     categories {
-      id
-      name
+      ...categoryFields
     }
+  }
+  fragment categoryFields on Category {
+    id
+    name
   }
 `;
 

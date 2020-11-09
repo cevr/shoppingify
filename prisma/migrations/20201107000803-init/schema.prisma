@@ -24,12 +24,13 @@ model User {
 model List {
   id        Int        @id @default(autoincrement())
   name      String
-  completed Boolean    @default(false)
-  cancelled Boolean    @default(false)
   user      User       @relation(fields: [userId], references: [id])
   userId    Int
   /// @onDelete(CASCADE)
   items     ListItem[]
+  status    Int        @default(0)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now()) @updatedAt
 }
 
 model Item {

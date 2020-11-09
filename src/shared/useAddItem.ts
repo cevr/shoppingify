@@ -6,7 +6,7 @@ import { queryCache } from "@lib/cache";
 
 export let addItemMutation = gql`
   mutation addItem($listId: Int, $itemId: Int!) {
-    updateList(id: $listId, add: [$itemId]) {
+    addItem(listId: $listId, itemId: $itemId) {
       id
     }
   }
@@ -17,5 +17,6 @@ export let useAddItem = () =>
     onSuccess: () => {
       queryCache.invalidateQueries("items");
       queryCache.invalidateQueries("lists");
+      queryCache.invalidateQueries("user");
     },
   });

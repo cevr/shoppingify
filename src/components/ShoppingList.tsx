@@ -1,9 +1,7 @@
-import { List, ListItem } from "@generated/graphql";
 import * as React from "react";
 import { gql } from "graphql-request";
 import {
   MdAdd,
-  MdCheck,
   MdCheckBox,
   MdCheckBoxOutlineBlank,
   MdDelete,
@@ -11,17 +9,19 @@ import {
   MdRemove,
 } from "react-icons/md";
 import clsx from "clsx";
-
-import { ContextualLayout } from "@layouts/ContextualLayout";
-import { useActiveList, makeCategorizedItemMap } from "@shared/index";
-import { client } from "@lib/client";
 import { useMutation } from "react-query";
-import { queryCache } from "@lib/cache";
 import { useForm } from "react-hook-form";
 
+import { ListFieldsFragment, ListItemFieldsFragment } from "@generated/graphql";
+import { ContextualLayout } from "@layouts/ContextualLayout";
+import { useActiveList, makeItemsByCategory } from "@shared/index";
+import { client } from "@lib/client";
+import { queryCache } from "@lib/cache";
+import { ConfirmationModal } from "./ConfirmationModal";
+
 export let removeItemMutation = gql`
-  mutation removeItem($listId: Int, $itemId: Int!) {
-    updateList(id: $listId, delete: [$itemId]) {
+  mutation removeItem($listId: Int!, $itemId: Int!) {
+    removeItem(itemId: $itemId, listId: $listId) {
       id
     }
   }
@@ -58,9 +58,9 @@ export let setListItemCompleteMutation = gql`
   }
 `;
 
-export let setShoppingListNameMutation = gql`
-  mutation setShoppingListName($id: Int!, $name: String!) {
-    updateList(id: $id, name: $name) {
+export let renameListMutation = gql`
+  mutation renameList($id: Int!, $name: String!) {
+    renameList(listId: $id, name: $name) {
       id
     }
   }
@@ -77,7 +77,7 @@ export let ShoppingList = ({ onAddItem }: ShoppingListProps) => {
     <ContextualLayout
       primary={
         <div className="bg-brand-secondary h-full flex flex-col">
-          <div className="relative flex justify-end rounded-3xl p-6 px-10 bg-brand-accent m-6 mb-10">
+          <div className="relative flex justify-end rounded-3xl p-6 bg-brand-accent m-6 mb-10">
             <img
               className="absolute ml-5 left-0 top-0"
               style={{
@@ -102,7 +102,9 @@ export let ShoppingList = ({ onAddItem }: ShoppingListProps) => {
           <ShoppingListDetails
             list={activeList}
             onEdit={() => {
-              setStatus("editing");
+              setStatus((status) =>
+                status === "editing" ? "idle" : "editing"
+              );
             }}
           />
         </div>
@@ -145,30 +147,47 @@ interface ShoppingListActionsProps {
 }
 
 let ShoppingListActions = ({ id, onFinish }: ShoppingListActionsProps) => {
+  let [isOpen, setIsOpen] = React.useState(false);
   let [complete] = useMutation(client.completeShoppingList, {
     onSuccess: () => {
       queryCache.invalidateQueries("lists");
+      queryCache.invalidateQueries("user");
       onFinish();
     },
   });
   let [cancel] = useMutation(client.cancelShoppingList, {
     onSuccess: () => {
       queryCache.invalidateQueries("lists");
+      queryCache.invalidateQueries("user");
       onFinish();
     },
   });
+
+  let onClose = () => {
+    setIsOpen(false);
+  };
+
+  let onOpen = () => {
+    setIsOpen(true);
+  };
+
   return (
     <>
-      <button
-        className="px-6 py-4 rounded-lg mr-2"
-        onClick={() => {
+      <button className="px-6 py-4 rounded-lg mr-2" onClick={onOpen}>
+        cancel
+      </button>
+      <ConfirmationModal
+        title="Are you sure you want to cancel this list?"
+        open={isOpen}
+        onClose={onClose}
+        onConfirm={() => {
           cancel({
             id,
           });
+          onClose();
         }}
-      >
-        cancel
-      </button>
+      />
+
       <button
         type="submit"
         form="item-form"
@@ -191,7 +210,7 @@ interface ShoppingListNameInputProps {
 
 let ShoppingListNameInput = ({ id }: ShoppingListNameInputProps) => {
   let { register, handleSubmit, reset } = useForm<{ name: string }>();
-  let [editName] = useMutation(client.setShoppingListName, {
+  let [rename] = useMutation(client.renameList, {
     onSuccess: () => {
       queryCache.invalidateQueries("lists");
       reset({
@@ -201,7 +220,7 @@ let ShoppingListNameInput = ({ id }: ShoppingListNameInputProps) => {
   });
 
   let onSubmit = handleSubmit(({ name }) => {
-    editName({
+    rename({
       id: id!,
       name,
     });
@@ -247,48 +266,41 @@ let EmptyShoppingList = () => {
   return (
     <div className="relative flex items-center justify-center h-full">
       <p className="text-xl font-bold">No items</p>
-      <img className="absolute" src="/person-shopping.svg" style={{
-        bottom: -12
-      }} />
+      <img className="absolute bottom-0" src="/person-shopping.svg" />
     </div>
   );
 };
 
+let listItemInvalidationConfig = {
+  onSuccess: () => {
+    queryCache.invalidateQueries("lists");
+    queryCache.invalidateQueries("items");
+  },
+};
+
 interface ShoppingListDetailsProps {
-  list: ReturnType<typeof useActiveList>;
+  list: ListFieldsFragment | null;
   onEdit: () => void;
 }
 
 let ShoppingListDetails = ({ list, onEdit }: ShoppingListDetailsProps) => {
   let [isEditing, setIsEditing] = React.useState(false);
-  let categorizedItems = React.useMemo(
-    () => makeCategorizedItemMap(list?.items),
-    [list]
+  let categorizedItems = React.useMemo(() => makeItemsByCategory(list?.items), [
+    list,
+  ]);
+  let [increment] = useMutation(
+    client.incrementListItemCount,
+    listItemInvalidationConfig
   );
-  let [increment] = useMutation(client.incrementListItemCount, {
-    onSuccess: () => {
-      queryCache.invalidateQueries("lists");
-      queryCache.invalidateQueries("items");
-    },
-  });
-  let [decrement] = useMutation(client.decrementListItemCount, {
-    onSuccess: () => {
-      queryCache.invalidateQueries("lists");
-      queryCache.invalidateQueries("items");
-    },
-  });
-  let [remove] = useMutation(client.removeItem, {
-    onSuccess: () => {
-      queryCache.invalidateQueries("lists");
-      queryCache.invalidateQueries("items");
-    },
-  });
-  let [setComplete] = useMutation(client.setListItemComplete, {
-    onSuccess: () => {
-      queryCache.invalidateQueries("lists");
-      queryCache.invalidateQueries("items");
-    },
-  });
+  let [decrement] = useMutation(
+    client.decrementListItemCount,
+    listItemInvalidationConfig
+  );
+  let [remove] = useMutation(client.removeItem, listItemInvalidationConfig);
+  let [setComplete] = useMutation(
+    client.setListItemComplete,
+    listItemInvalidationConfig
+  );
 
   if (!list || list?.items.length === 0) {
     return <EmptyShoppingList />;
@@ -301,7 +313,7 @@ let ShoppingListDetails = ({ list, onEdit }: ShoppingListDetailsProps) => {
         <button
           className="focus:outline-none text-xl"
           onClick={() => {
-            setIsEditing(true);
+            setIsEditing((editing) => !editing);
             onEdit();
           }}
         >
@@ -315,7 +327,7 @@ let ShoppingListDetails = ({ list, onEdit }: ShoppingListDetailsProps) => {
             <ShoppingListItem
               key={item.id}
               isEditing={isEditing}
-              item={item}
+              item={item as ListItemFieldsFragment}
               listId={list?.id!}
               onIncrement={(id) => {
                 increment({
@@ -351,7 +363,7 @@ let ShoppingListDetails = ({ list, onEdit }: ShoppingListDetailsProps) => {
 };
 
 interface ShoppingListItemProps {
-  item: ListItem;
+  item: ListItemFieldsFragment;
   listId: number;
   onIncrement: (id: number) => void;
   onDecrement: (id: number) => void;

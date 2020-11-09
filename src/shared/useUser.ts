@@ -8,16 +8,19 @@ import { client } from "@lib/client";
 export let userQuery = gql`
   query me {
     me {
-      id
-      username
-      activeListId
+      ...userFields
     }
+  }
+  fragment userFields on User {
+    id
+    username
+    activeListId
   }
 `;
 
 export let useUser = () => {
   let router = useRouter();
-  let query = useQuery("me", () => client.me());
+  let query = useQuery("user", () => client.me());
 
   React.useEffect(() => {
     if (query.data && !query.data.me) {

@@ -7,7 +7,9 @@ export let MainLayout: React.FC = ({ children }) => (
     <nav className="w-40 sm:w-24 py-8 flex flex-col justify-between">
       <Nav />
     </nav>
-    <main className="w-full bg-gray-100 p-6 md:py-10 md:px-16">{children}</main>
+    <main className="w-full bg-gray-100 p-6 md:py-10 md:px-16 overflow-y-auto">
+      {children}
+    </main>
     <aside style={{ minWidth: 360 }}>
       <Contextual />
     </aside>

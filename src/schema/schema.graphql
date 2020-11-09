@@ -7,6 +7,11 @@ type Category {
   name: String!
 }
 
+"""
+A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+"""
+scalar DateTime
+
 type Item {
   category: Category
   id: Int!
@@ -16,9 +21,12 @@ type Item {
 }
 
 type List {
+  createdAt: DateTime!
   id: Int!
   items: [ListItem!]!
   name: String!
+  status: ListStatus!
+  updatedAt: DateTime!
 }
 
 type ListItem {
@@ -30,23 +38,28 @@ type ListItem {
   name: String!
 }
 
+enum ListStatus {
+  ACTIVE
+  CANCELLED
+  COMPLETED
+}
+
 type Mutation {
+  addItem(itemId: Int!, listId: Int): List
   cancelList(id: Int!): List
   completeList(id: Int!): List
   createCategory(name: String!): Category
   createItem(categoryId: Int!, image: String, name: String!, note: String): Item
-  createList(items: [Int!], name: String!): List
   decrementListItemCount(itemId: Int!, listId: Int!): ListItem
   deleteCategory(id: Int!): Category
   deleteItem(id: Int!): Item
   incrementListItemCount(itemId: Int!, listId: Int!): ListItem
+  removeItem(itemId: Int!, listId: Int!): List
+  renameList(listId: Int!, name: String!): List
   setListItemComplete(complete: Boolean!, itemId: Int!, listId: Int!): ListItem
   signin(password: String!, username: String!): User
   signout: Boolean
   signup(password: String!, username: String!): User
-  updateCategory(id: Int!, name: String!): Category
-  updateItem(categoryId: Int, image: String, itemId: Int!, name: String, note: String): Item
-  updateList(add: [Int!], delete: [Int!], id: Int, name: String): List
 }
 
 type Query {

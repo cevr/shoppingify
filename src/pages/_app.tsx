@@ -2,12 +2,12 @@ import { AppProps } from "next/app";
 import Head from "next/head";
 import { ReactQueryCacheProvider } from "react-query";
 import { Hydrate } from "react-query/hydration";
+import { useRouter } from "next/router";
 
 import "@css/global.css";
 import "@css/tailwind.css";
 import { MainLayout } from "@layouts/MainLayout";
 import { queryCache } from "@lib/cache";
-import { useRouter } from "next/router";
 
 export default function App({ Component, pageProps }: AppProps) {
   let router = useRouter();

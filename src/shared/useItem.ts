@@ -6,13 +6,16 @@ import { client } from "@lib/client";
 export let itemQuery = gql`
   query item($id: Int!) {
     item(id: $id) {
-      id
+      ...itemDetailsFields
+    }
+  }
+  fragment itemDetailsFields on Item {
+    id
+    name
+    image
+    note
+    category {
       name
-      image
-      note
-      category {
-        name
-      }
     }
   }
 `;
