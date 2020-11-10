@@ -1,15 +1,14 @@
 import * as React from "react";
 import { gql } from "graphql-request";
 import { useRouter } from "next/router";
+import { GetServerSideProps } from "next";
 import { useForm } from "react-hook-form";
 import { QueryCache, useMutation } from "react-query";
+import { dehydrate } from "react-query/hydration";
 
 import { client, serverClient } from "@lib/client";
 import { ItemFormInput } from "@components/ItemForm";
-import { useUser } from "@shared/index";
 import { queryCache } from "@lib/cache";
-import { GetServerSideProps } from "next";
-import { dehydrate } from "react-query/hydration";
 
 export let signinMutation = gql`
   mutation signin($username: String!, $password: String!) {
@@ -39,7 +38,6 @@ interface FormFields {
 }
 
 let Signin = () => {
-  let { data: userData } = useUser();
   let router = useRouter();
 
   let { register, errors, handleSubmit } = useForm<FormFields>();
@@ -61,12 +59,6 @@ let Signin = () => {
       },
     }
   );
-
-  React.useEffect(() => {
-    if (userData?.me) {
-      router.replace("/items");
-    }
-  }, [userData?.me]);
 
   let onSignin = handleSubmit((fields) => {
     signin(fields);
