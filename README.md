@@ -6,7 +6,7 @@
 
 <div align="center">
   <h3>
-    <a href="https://https://vercel.com/cvr/shoppingify">
+    <a href="https://shoppingify.vercel.app/">
       Demo
     </a>
     <span> | </span>
