@@ -9,7 +9,7 @@
     "strict": true,
     "lib": ["esnext"],
     "esModuleInterop": true,
-    "target": "esnext",
+    "target": "es2019",
     "baseUrl": "src",
     "paths": {
       "@components/*": ["components/*"],
