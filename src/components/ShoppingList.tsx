@@ -90,7 +90,7 @@ export let ShoppingList = ({ onAddItem }: ShoppingListProps) => {
               alt="Bottle"
             />
             <div className="flex flex-col justify-center items-start md:w-1/2 mr-5">
-              <p className="text-white mb-2">Didnt find what you need ?</p>
+              <p className="text-white mb-2">Didn't find what you need ?</p>
               <button
                 onClick={onAddItem}
                 className="rounded-md bg-white text-black px-6 py-2"
