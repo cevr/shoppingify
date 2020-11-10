@@ -43,18 +43,24 @@ let Signin = () => {
   let router = useRouter();
 
   let { register, errors, handleSubmit } = useForm<FormFields>();
-  let [signin, { error: signinError }] = useMutation(client.signin, {
-    onSuccess: () => {
-      queryCache.invalidateQueries("user");
-      router.replace("/items");
-    },
-  });
-  let [signup, { error: signupError }] = useMutation(client.signup, {
-    onSuccess: () => {
-      queryCache.invalidateQueries("user");
-      router.replace("/items");
-    },
-  });
+  let [signin, { error: signinError, isLoading: signinLoading }] = useMutation(
+    client.signin,
+    {
+      onSuccess: () => {
+        queryCache.invalidateQueries("user");
+        router.replace("/items");
+      },
+    }
+  );
+  let [signup, { error: signupError, isLoading: signupLoading }] = useMutation(
+    client.signup,
+    {
+      onSuccess: () => {
+        queryCache.invalidateQueries("user");
+        router.replace("/items");
+      },
+    }
+  );
 
   React.useEffect(() => {
     if (userData?.me) {
@@ -99,13 +105,13 @@ let Signin = () => {
           />
           <div className="flex justify-between mb-4">
             <button onClick={onSignup} className="px-6 py-4 rounded-lg mr-2">
-              Signup
+              {signupLoading ? "Signing up..." : "Signup"}
             </button>
             <button
               onClick={onSignin}
               className="px-6 py-4 rounded-lg bg-brand-primary text-white"
             >
-              Signin
+              {signinLoading ? "Signing in..." : "Signin"}
             </button>
           </div>
           {signupError ? (

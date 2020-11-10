@@ -1,5 +1,3 @@
-<!-- Please update value in the {}  -->
-
 <h1 align="center">Shoppingify</h1>
 
 <div align="center">
@@ -50,9 +48,11 @@ I think for next time, I'd focus less on building up the API layer and use somet
 <!-- This section should list any major frameworks that you built your project using. Here are a few examples.-->
 
 - [React](https://reactjs.org/)
+- [React Query](https://react-query.tanstack.com/)
 - [Next.js](https://nextjs.org/)
 - [Prisma](https://www.prisma.io/)
 - [Tailwind](https://tailwindcss.com/)
+- [GraphQL](https://graphql.org/)
 
 ## Features
 
