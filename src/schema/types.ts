@@ -83,15 +83,14 @@ export let ListItem = objectType({
 });
 
 enum ListStatusEnum {
-  ACTIVE,
-  COMPLETED,
-  CANCELLED,
+  ACTIVE = "ACTIVE",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
 }
 
 export let ListStatus = enumType({
   name: "ListStatus",
   members: ListStatusEnum,
-  rootTyping: "number",
 });
 
 export let List = objectType({
@@ -268,7 +267,7 @@ export let Mutation = objectType({
           context.cookies.set("auth-token", token, {
             httpOnly: true,
             sameSite: "lax",
-              });
+          });
           return user;
         } else {
           throw new AuthenticationError("Invalid credentials");
@@ -295,7 +294,7 @@ export let Mutation = objectType({
           context.cookies.set("auth-token", token, {
             httpOnly: true,
             sameSite: "lax",
-              });
+          });
           return user;
         } catch {
           throw new ApolloError("Invalid request");
@@ -310,7 +309,7 @@ export let Mutation = objectType({
           httpOnly: true,
           maxAge: -1,
           sameSite: "lax",
-          });
+        });
         return true;
       },
     });

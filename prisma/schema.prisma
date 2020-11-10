@@ -1,6 +1,6 @@
 datasource db {
-  provider = "sqlite"
-  url      = "file:dev.db"
+  provider = "postgresql"
+  url      = env("DB_URI")
 }
 
 generator client {
@@ -28,9 +28,15 @@ model List {
   userId    Int
   /// @onDelete(CASCADE)
   items     ListItem[]
-  status    Int        @default(0)
+  status    ListStatus @default(ACTIVE)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @default(now()) @updatedAt
+}
+
+enum ListStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
 }
 
 model Item {

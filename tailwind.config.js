@@ -3,7 +3,7 @@ module.exports = {
     removeDeprecatedGapUtilities: true,
     purgeLayersByDefault: true,
   },
-  // purge: [".src/components/**/*.{js,ts,jsx,tsx}", ".src/pages/**/*.{js,ts,jsx,tsx}", ".src/layouts/**/*.{js,ts,jsx,tsx}"],
+  purge: false,
   theme: {
     fontFamily: {
       display: ["Quicksand", "sans-serif"],

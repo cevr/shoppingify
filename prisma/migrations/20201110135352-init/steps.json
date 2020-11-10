@@ -2,6 +2,15 @@
   "version": "0.3.14-fixed",
   "steps": [
     {
+      "tag": "CreateEnum",
+      "enum": "ListStatus",
+      "values": [
+        "ACTIVE",
+        "COMPLETED",
+        "CANCELLED"
+      ]
+    },
+    {
       "tag": "CreateSource",
       "source": "db"
     },
@@ -12,7 +21,7 @@
         "source": "db"
       },
       "argument": "provider",
-      "value": "\"sqlite\""
+      "value": "\"postgresql\""
     },
     {
       "tag": "CreateArgument",
@@ -241,7 +250,7 @@
       "tag": "CreateField",
       "model": "List",
       "field": "status",
-      "type": "Int",
+      "type": "ListStatus",
       "arity": "Required"
     },
     {
@@ -267,7 +276,7 @@
         "directive": "default"
       },
       "argument": "",
-      "value": "0"
+      "value": "ACTIVE"
     },
     {
       "tag": "CreateField",
