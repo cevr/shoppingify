@@ -268,8 +268,7 @@ export let Mutation = objectType({
           context.cookies.set("auth-token", token, {
             httpOnly: true,
             sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
-          });
+              });
           return user;
         } else {
           throw new AuthenticationError("Invalid credentials");
@@ -296,8 +295,7 @@ export let Mutation = objectType({
           context.cookies.set("auth-token", token, {
             httpOnly: true,
             sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
-          });
+              });
           return user;
         } catch {
           throw new ApolloError("Invalid request");
@@ -312,8 +310,7 @@ export let Mutation = objectType({
           httpOnly: true,
           maxAge: -1,
           sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
-        });
+          });
         return true;
       },
     });

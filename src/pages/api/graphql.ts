@@ -32,7 +32,6 @@ let apolloServer = new ApolloServer({
         httpOnly: true,
         maxAge: -1,
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
       });
     }
     return {
