@@ -82,7 +82,7 @@ $ npm dev
 <!-- This section should list any articles or add-ons/plugins that helps you to complete the project. This is optional but it will help you in the future. For example -->
 
 - [Thu Nghiem](https://twitter.com/thunghiemdinh) for the awesome app design
-- [Swyx](htts://twitter.com/swyx) for the inspiration to learn in public
+- [swyx](https://twitter.com/swyx) for the inspiration to learn in public
 
 ## Contact
 
