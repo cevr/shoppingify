@@ -9,7 +9,7 @@ class Prisma extends PrismaClient {
   }
 
   async onDelete(args: onDeleteArgs) {
-    const prismaDelete = new PrismaDelete(this);
+    let prismaDelete = new PrismaDelete(this);
     await prismaDelete.onDelete(args);
   }
 }

@@ -3,7 +3,7 @@ import Head from "next/head";
 import { Listbox } from "@headlessui/react";
 import clsx from "clsx";
 
-import { Popover, PieChart } from "@components/index";
+import { Popover, PieChart, EmptyFallback } from "@components/index";
 import {
   MonthlyTopStatisticTuple,
   makePieChartData,
@@ -14,39 +14,53 @@ import {
 } from "@lib/statistics.utils";
 
 let Statistics = () => {
-  let topItems = useTopItems();
-  let topItemsByMonth = useTopItemsByMonth();
-  let topCategories = useTopCategories();
-  let topCategoriesByMonth = useTopCategoriesByMonth();
-
   return (
     <>
       <Head>
         <title>Shoppingify | Statistics</title>
       </Head>
 
-      <div className="flex flex-col justify-between h-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          <TopStatistic stats={topItems} label="Top Items" color="info" />
-          <TopStatistic
-            stats={topCategories}
-            label="Top Categories"
-            color="primary"
-          />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          <TopMonthlyStatistic label="Items" stats={topItemsByMonth} />
-          <TopMonthlyStatistic
-            label="Categories"
-            stats={topCategoriesByMonth}
-          />
-        </div>
-      </div>
+      <AllStatistics />
     </>
   );
 };
 
 export default Statistics;
+
+let AllStatistics = () => {
+  let topItems = useTopItems();
+  let topItemsByMonth = useTopItemsByMonth();
+  let topCategories = useTopCategories();
+  let topCategoriesByMonth = useTopCategoriesByMonth();
+
+  let isEmpty = [
+    topItems,
+    topItemsByMonth,
+    topCategories,
+    topCategoriesByMonth,
+  ].some((statistic) => statistic.length === 0);
+
+  if (isEmpty) {
+    return <EmptyFallback>There's no statistics to show... yet.</EmptyFallback>;
+  }
+
+  return (
+    <div className="flex flex-col justify-between h-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 mb-16">
+        <TopStatistic stats={topItems} label="Top Items" color="info" />
+        <TopStatistic
+          stats={topCategories}
+          label="Top Categories"
+          color="primary"
+        />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+        <TopMonthlyStatistic label="Items" stats={topItemsByMonth} />
+        <TopMonthlyStatistic label="Categories" stats={topCategoriesByMonth} />
+      </div>
+    </div>
+  );
+};
 
 interface TopStatisticProps {
   label: string;

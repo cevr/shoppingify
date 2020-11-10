@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 
 import { ListFieldsFragment, ListItemFieldsFragment } from "@generated/graphql";
 import { ContextualLayout } from "@layouts/ContextualLayout";
-import { useActiveList, makeItemsByCategory } from "@shared/index";
+import { useActiveList, makeItemsByCategory, useIsMobile } from "@shared/index";
 import { client } from "@lib/client";
 import { queryCache } from "@lib/cache";
 import { ConfirmationModal } from "./ConfirmationModal";
@@ -73,22 +73,23 @@ interface ShoppingListProps {
 export let ShoppingList = ({ onAddItem }: ShoppingListProps) => {
   let activeList = useActiveList();
   let [status, setStatus] = React.useState<"idle" | "editing">("idle");
+  let isMobile = useIsMobile();
   return (
     <ContextualLayout
       primary={
         <div className="bg-brand-secondary h-full flex flex-col">
-          <div className="relative flex justify-end rounded-3xl p-6 bg-brand-accent m-6 mb-10">
+          <div className="relative flex justify-center md:justify-end items:center rounded-3xl bg-brand-accent p-2 mx-auto my-6 md:p-6 md:m-6 md:mb-10">
             <img
-              className="absolute ml-5 left-0 top-0"
+              className="relative md:absolute ml-2 mr-4 md:ml-5 left-0 top-0"
               style={{
-                height: 150,
-                top: "-1.5rem",
+                height: isMobile ? 125 : 150,
+                top: isMobile ? undefined : "-1.5rem",
               }}
               height="150px"
               src="/bottle.svg"
               alt="Bottle"
             />
-            <div className="flex flex-col items-start w-1/2 mr-5">
+            <div className="flex flex-col justify-center items-start md:w-1/2 mr-5">
               <p className="text-white mb-2">Didnt find what you need ?</p>
               <button
                 onClick={onAddItem}
@@ -264,7 +265,7 @@ let ShoppingListNameInput = ({ id }: ShoppingListNameInputProps) => {
 
 let EmptyShoppingList = () => {
   return (
-    <div className="relative flex items-center justify-center h-full">
+    <div className="relative flex items-center justify-center h-full pb-64 md:pb-0">
       <p className="text-xl font-bold">No items</p>
       <img className="absolute bottom-0" src="/person-shopping.svg" />
     </div>

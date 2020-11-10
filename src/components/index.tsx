@@ -9,3 +9,4 @@ export * from "./Popover";
 export * from "./Portal";
 export * from "./Tooltip";
 export * from "./ShoppingList";
+export * from "./Fallbacks";

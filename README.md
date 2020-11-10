@@ -1,36 +1,91 @@
-# TypeScript and GraphQL Example
+<!-- Please update value in the {}  -->
 
-One of the strengths of GraphQL is [enforcing data types on runtime](https://graphql.github.io/graphql-spec/June2018/#sec-Value-Completion). Further, TypeScript and [GraphQL Code Generator](https://graphql-code-generator.com/) (graphql-codegen) make it safer by typing data statically, so you can write truly type-protected code with rich IDE assists.
+<h1 align="center">Shoppingify</h1>
 
-This template extends [Apollo Server and Client Example](https://github.com/vercel/next.js/tree/canary/examples/api-routes-apollo-server-and-client#readme) by rewriting in TypeScript and integrating [graphql-let](https://github.com/piglovesyou/graphql-let#readme), which runs [TypeScript React Apollo](https://graphql-code-generator.com/docs/plugins/typescript-react-apollo) in [graphql-codegen](https://github.com/dotansimha/graphql-code-generator#readme) under the hood. It enhances the typed GraphQL use as below:
+<div align="center">
+   Solution for a challenge from  <a href="http://devchallenges.io" target="_blank">Devchallenges.io</a>.
+</div>
 
-```tsx
-import { useNewsQuery } from './news.graphql'
+<div align="center">
+  <h3>
+    <a href="https://https://vercel.com/cvr/shoppingify">
+      Demo
+    </a>
+    <span> | </span>
+    <a href="https://github.com/cevr/shoppingify">
+      Solution
+    </a>
+    <span> | </span>
+    <a href="https://devchallenges.io/challenges/mGd5VpbO4JnzU6I9l96x">
+      Challenge
+    </a>
+  </h3>
+</div>
 
-const News = () => {
-	// Typed already️⚡️
-	const { data: { news } } = useNewsQuery()
+<!-- TABLE OF CONTENTS -->
 
-	return <div>{news.map(...)}</div>
-}
-```
+## Table of Contents
 
-By default `**/*.graphqls` is recognized as GraphQL schema and `**/*.graphql` as GraphQL documents. If you prefer the other extensions, make sure the settings of the webpack loader in `next.config.js` and `.graphql-let.yml` are consistent.
+- [Overview](#overview)
+  - [Built With](#built-with)
+- [Features](#features)
+- [How to use](#how-to-use)
+- [Contact](#contact)
+- [Acknowledgements](#acknowledgements)
 
-## Deploy your own
+<!-- OVERVIEW -->
 
-Deploy the example using [Vercel](https://vercel.com):
+## Overview
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/vercel/next.js/tree/canary/examples/with-typescript-graphql)
+![demo](/demo.gif)
 
-## How to use
+It sucks when you're not able to prove you've done cool stuff since it's all proprietary. I decided to change with this, [Shoppingify](https://shoppingify.vercel.app/). It's a cool little shopping list app that lets you quickly create, edit and complete (or cancel) shopping lists. What else could you want? Well, we've got histories and statistics!
 
-Execute [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) with [npm](https://docs.npmjs.com/cli/init) or [Yarn](https://yarnpkg.com/lang/en/docs/cli/create/) to bootstrap the example:
+This was a lot of fun to make. Learned a lot about Prisma, which is super awesome. Got a little more comfortable with Tailwind, and got to use my beloved React framework, Next.js.
+
+I think for next time, I'd focus less on building up the API layer and use something like [Hasura](https://hasura.io/).
+
+### Built With
+
+<!-- This section should list any major frameworks that you built your project using. Here are a few examples.-->
+
+- [React](https://reactjs.org/)
+- [Next.js](https://nextjs.org/)
+- [Prisma](https://www.prisma.io/)
+- [Tailwind](https://tailwindcss.com/)
+
+## Features
+
+<!-- List the features of your application or follow the template. Don't share the figma file here :) -->
+
+This application/site was created as a submission to a [DevChallenges](https://devchallenges.io/challenges) challenge. The [challenge](https://devchallenges.io/challenges/mGd5VpbO4JnzU6I9l96x) was to build an application to complete the given user stories.
+
+## How To Use
+
+<!-- Example: -->
+
+To clone and run this application, you'll need [Git](https://git-scm.com) and [Node.js](https://nodejs.org/en/download/) (which comes with [npm](http://npmjs.com)) installed on your computer. From your command line:
 
 ```bash
-npx create-next-app --example with-typescript-graphql with-typescript-graphql-app
-# or
-yarn create next-app --example with-typescript-graphql with-typescript-graphql-app
+# Clone this repository
+$ git clone https://github.com/your-user-name/your-project-name
+
+# Install dependencies
+$ npm install
+
+# Run the app
+$ npm dev
 ```
 
-Deploy it to the cloud with [Vercel](https://vercel.com/import?filter=next.js&utm_source=github&utm_medium=readme&utm_campaign=next-example) ([Documentation](https://nextjs.org/docs/deployment)).
+## Acknowledgements
+
+<!-- This section should list any articles or add-ons/plugins that helps you to complete the project. This is optional but it will help you in the future. For example -->
+
+- [Thu Nghiem](https://twitter.com/thunghiemdinh) for the awesome app design
+- [Swyx](htts://twitter.com/swyx) for the inspiration to learn in public
+
+## Contact
+
+- Website [cvr.im](https://cvr.im)
+- GitHub [@cevr](https://github.com/cevr)
+- Twitter [@_cristianvr_](https://twitter.com/_cristianvr_)

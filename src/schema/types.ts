@@ -91,6 +91,7 @@ enum ListStatusEnum {
 export let ListStatus = enumType({
   name: "ListStatus",
   members: ListStatusEnum,
+  rootTyping: "number",
 });
 
 export let List = objectType({

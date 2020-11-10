@@ -10,10 +10,10 @@ interface PopoverProps {
 }
 
 export let Popover = ({ children, placement, open, anchor }: PopoverProps) => {
-  const [popperElement, setPopperElement] = React.useState<HTMLElement | null>(
+  let [popperElement, setPopperElement] = React.useState<HTMLElement | null>(
     null
   );
-  const { styles, attributes } = usePopper(anchor, popperElement, {
+  let { styles, attributes } = usePopper(anchor, popperElement, {
     placement: placement ?? "right",
   });
 

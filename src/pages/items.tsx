@@ -3,8 +3,9 @@ import Head from "next/head";
 import { MdAdd, MdSearch } from "react-icons/md";
 import Fuse from "fuse.js";
 import debounce from "debounce-fn";
+import { useRouter } from "next/router";
 
-import { Paper } from "@components/index";
+import { EmptyFallback, Paper } from "@components/index";
 import {
   Item,
   makeItemsByCategory,
@@ -12,7 +13,6 @@ import {
   useAddItem,
   useItems,
 } from "@shared/index";
-import { useRouter } from "next/router";
 import { ItemFieldsFragment } from "@generated/graphql";
 
 type FilteredItems = [month: string, items: ItemFieldsFragment[]];
@@ -22,9 +22,16 @@ let useFilteredItems = (): [
   onSearch: (event: React.ChangeEvent<HTMLInputElement>) => void
 ] => {
   let { data: itemsData } = useItems();
+  let [search, setSearch] = React.useState("");
   let [filteredItems, setFilteredItems] = React.useState<ItemFieldsFragment[]>(
-    itemsData?.items ?? []
+    []
   );
+
+  React.useEffect(() => {
+    console.log("new items");
+    filterItems(search);
+  }, [itemsData?.items, search]);
+
   let fuse = React.useMemo(
     () =>
       new Fuse(itemsData?.items ?? [], {
@@ -34,29 +41,34 @@ let useFilteredItems = (): [
     [itemsData?.items]
   );
 
+  let filterItems = (searchInput: string) => {
+    let filteredItems = itemsData?.items ?? [];
+
+    if (searchInput) {
+      filteredItems = fuse.search(searchInput).map((result) => result.item);
+    }
+
+    setFilteredItems(filteredItems);
+  };
+
   let searchItems = debounce(
     (search: string) => {
-      let filteredItems = itemsData?.items ?? [];
-
-      if (search) {
-        filteredItems = fuse.search(search).map((result) => result.item);
-      }
-
-      setFilteredItems(filteredItems);
+      setSearch(search);
+      filterItems(search);
     },
     {
       wait: 500,
     }
   );
 
-  let items = React.useMemo(() => makeItemsByCategory(filteredItems), [
-    filteredItems,
-  ]);
-
   let onSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     let search = event.target.value;
     searchItems(search);
   };
+
+  let items = React.useMemo(() => makeItemsByCategory(filteredItems), [
+    filteredItems,
+  ]);
 
   return [items, onSearch];
 };
@@ -68,14 +80,17 @@ let Items = () => {
       <Head>
         <title>Shoppingify | Items</title>
       </Head>
-      <div className="flex justify-between w-full items-start mb-10">
-        <h1 className="text-2xl w-1/2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 w-full items-start mb-10">
+        <h1 className="text-xl md:text-2xl">
           <span className="text-brand-primary">Shoppingify</span> allows you to
           take your shopping list wherever you go
         </h1>
 
-        <Paper className="flex items-center px-3 border-2 rounded-lg md:w-1/4 focus-within:border-brand-primary">
-          <MdSearch className="h-6 w-6 mr-3" />
+        <Paper
+          className="place-self-start lg:place-self-end w-full flex items-center px-3 border-2 rounded-lg focus-within:border-brand-primary"
+          style={{ minWidth: 250, maxWidth: 450 }}
+        >
+          <MdSearch className="h-6 w-6 mr-3" style={{ minWidth: "1.5rem" }} />
           <input
             className="p-1 focus:outline-none"
             onChange={onSearch}
@@ -83,7 +98,6 @@ let Items = () => {
           />
         </Paper>
       </div>
-
       <CategorizedItems items={items} />
     </>
   );
@@ -101,7 +115,7 @@ let CategorizedItems = ({ items }: CategorizedItemsProps) => {
   let [addItem] = useAddItem();
 
   if (items.length === 0) {
-    return <div>No items</div>;
+    return <EmptyFallback>There's no items here... yet.</EmptyFallback>;
   }
 
   return (
@@ -109,7 +123,7 @@ let CategorizedItems = ({ items }: CategorizedItemsProps) => {
       {items.map(([category, items]) => (
         <div className="flex flex-col mb-4" key={category}>
           <div className="mb-2 text-lg capitalize">{category}</div>
-          <ul className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
             {items.map((item) => (
               <ItemEntry
                 key={item.id}

@@ -60,7 +60,7 @@ export let ItemForm = ({ onComplete }: ItemFormProps) => {
   return (
     <ContextualLayout
       primary={
-        <form id="item-form" className="p-8" onSubmit={onSubmit}>
+        <form id="item-form" className="p-4 md:p-8" onSubmit={onSubmit}>
           <h2 className="text-xl mb-5"> Add a new item</h2>
           <ItemFormInput
             ref={register({ required: true })}
@@ -306,7 +306,6 @@ let CategorySelect = (props: CategorySelectProps) => {
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                console.log("clicked button");
                 onCategoryAdd();
               }}
             >
