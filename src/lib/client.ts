@@ -33,4 +33,8 @@ let absoluteUrl = (req: IncomingMessage) => {
 };
 
 export let serverClient = (req: IncomingMessage) =>
-  getSdk(new GraphQLClient(`${absoluteUrl(req)}/api/graphql`, req as any));
+  getSdk(
+    new GraphQLClient(`${absoluteUrl(req)}/api/graphql`, {
+      headers: req.headers as any,
+    })
+  );

@@ -2,12 +2,14 @@ import * as React from "react";
 import { gql } from "graphql-request";
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
-import { useMutation } from "react-query";
+import { QueryCache, useMutation } from "react-query";
 
-import { client } from "@lib/client";
+import { client, serverClient } from "@lib/client";
 import { ItemFormInput } from "@components/ItemForm";
 import { useUser } from "@shared/index";
 import { queryCache } from "@lib/cache";
+import { GetServerSideProps } from "next";
+import { dehydrate } from "react-query/hydration";
 
 export let signinMutation = gql`
   mutation signin($username: String!, $password: String!) {
@@ -41,13 +43,13 @@ let Signin = () => {
   let router = useRouter();
 
   let { register, errors, handleSubmit } = useForm<FormFields>();
-  let [signin, { error }] = useMutation(client.signin, {
+  let [signin, { error: signinError }] = useMutation(client.signin, {
     onSuccess: () => {
       queryCache.invalidateQueries("user");
       router.replace("/items");
     },
   });
-  let [signup] = useMutation(client.signup, {
+  let [signup, { error: signupError }] = useMutation(client.signup, {
     onSuccess: () => {
       queryCache.invalidateQueries("user");
       router.replace("/items");
@@ -106,10 +108,16 @@ let Signin = () => {
               Signin
             </button>
           </div>
-          {error && (
+          {signupError ? (
             <p className="text-red-500 text-center">
-              Hmm, no dice. Maybe try signing up?
+              Well, that didn't work. Try a more unique username!
             </p>
+          ) : (
+            signinError && (
+              <p className="text-red-500 text-center">
+                Hmm, no dice. Maybe try signing up?
+              </p>
+            )
           )}
         </form>
       </div>
@@ -118,3 +126,22 @@ let Signin = () => {
 };
 
 export default Signin;
+
+export let getServerSideProps: GetServerSideProps = async ({ req, res }) => {
+  let queryCache = new QueryCache();
+
+  await queryCache.prefetchQuery("user", () => serverClient(req).me());
+
+  if (queryCache.getQueryData("user")) {
+    res.writeHead(302, {
+      Location: "/items",
+    });
+    res.end();
+  }
+
+  return {
+    props: {
+      dehydratedState: dehydrate(queryCache),
+    },
+  };
+};

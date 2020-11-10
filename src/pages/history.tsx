@@ -76,9 +76,10 @@ export default History;
 
 export let getServerSideProps: GetServerSideProps = async ({ req }) => {
   let queryCache = new QueryCache();
+  let client = serverClient(req);
 
-  await queryCache.prefetchQuery("user", serverClient(req).me);
-  await queryCache.prefetchQuery("lists", serverClient(req).lists);
+  await queryCache.prefetchQuery("user", () => client.me());
+  await queryCache.prefetchQuery("lists", () => client.lists());
 
   return {
     props: {
