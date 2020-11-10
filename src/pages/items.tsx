@@ -90,7 +90,7 @@ let Items = () => {
         </h1>
 
         <Paper
-          className="place-self-start lg:place-self-end w-full flex items-center px-3 border-2 rounded-lg focus-within:border-brand-primary"
+          className="place-self-start w-full flex items-center px-3 border-2 rounded-lg focus-within:border-brand-primary"
           style={{ minWidth: 250, maxWidth: 450 }}
         >
           <MdSearch className="h-6 w-6 mr-3" style={{ minWidth: "1.5rem" }} />
