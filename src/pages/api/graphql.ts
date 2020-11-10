@@ -23,7 +23,7 @@ let apolloServer = new ApolloServer({
     user = user
       ? await prisma.user.findOne({
           where: {
-            id: user?.id,
+            id: user.id,
           },
         })
       : null;
