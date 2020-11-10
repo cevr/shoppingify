@@ -4,6 +4,9 @@ import { MdAdd, MdSearch } from "react-icons/md";
 import Fuse from "fuse.js";
 import debounce from "debounce-fn";
 import { useRouter } from "next/router";
+import { GetServerSideProps } from "next";
+import { QueryCache } from "react-query";
+import { dehydrate } from "react-query/hydration";
 
 import { EmptyFallback, Paper } from "@components/index";
 import {
@@ -14,6 +17,7 @@ import {
   useItems,
 } from "@shared/index";
 import { ItemFieldsFragment } from "@generated/graphql";
+import { serverClient } from "@lib/client";
 
 type FilteredItems = [month: string, items: ItemFieldsFragment[]];
 
@@ -28,7 +32,6 @@ let useFilteredItems = (): [
   );
 
   React.useEffect(() => {
-    console.log("new items");
     filterItems(search);
   }, [itemsData?.items, search]);
 
@@ -186,3 +189,16 @@ let ItemEntry = ({
     </Paper>
   </li>
 );
+
+export let getServerSideProps: GetServerSideProps = async ({ req }) => {
+  let queryCache = new QueryCache();
+
+  await queryCache.prefetchQuery("user", serverClient(req).me);
+  await queryCache.prefetchQuery("items", serverClient(req).items);
+
+  return {
+    props: {
+      dehydratedState: dehydrate(queryCache),
+    },
+  };
+};

@@ -1,11 +1,19 @@
 import * as React from "react";
+import { useRouter } from "next/router";
 
 import { Nav, Contextual } from "@components/index";
 import { useIsMobile } from "@shared/index";
 
 export let MainLayout: React.FC = ({ children }) => {
   let [contextualActive, setContextualActive] = React.useState(false);
+  let router = useRouter();
   let isMobile = useIsMobile();
+
+  React.useEffect(() => {
+    if (router.query.itemId) {
+      setContextualActive(true);
+    }
+  }, [router.query]);
 
   return (
     <div className="h-full w-full flex">

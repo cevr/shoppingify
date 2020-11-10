@@ -3,10 +3,14 @@ import Head from "next/head";
 import { format } from "date-fns";
 import { MdEventNote } from "react-icons/md";
 import clsx from "clsx";
+import { GetServerSideProps } from "next";
+import { QueryCache } from "react-query";
+import { dehydrate } from "react-query/hydration";
 
 import { ListFieldsFragment, ListStatus } from "@generated/graphql";
 import { useListsByMonth } from "@shared/index";
 import { EmptyFallback, Paper } from "@components/index";
+import { serverClient } from "@lib/client";
 
 let History = () => {
   return (
@@ -24,9 +28,7 @@ let ShoppingListsByMonth = () => {
   let lists = useListsByMonth();
 
   if (lists.length === 0) {
-    return (
-      <EmptyFallback>There's no history here... yet.</EmptyFallback>
-    );
+    return <EmptyFallback>There's no history here... yet.</EmptyFallback>;
   }
 
   return (
@@ -71,3 +73,16 @@ let ShoppingListEntry = ({ list }: ShoppingListEntryProps) => (
 );
 
 export default History;
+
+export let getServerSideProps: GetServerSideProps = async ({ req }) => {
+  let queryCache = new QueryCache();
+
+  await queryCache.prefetchQuery("user", serverClient(req).me);
+  await queryCache.prefetchQuery("lists", serverClient(req).lists);
+
+  return {
+    props: {
+      dehydratedState: dehydrate(queryCache),
+    },
+  };
+};

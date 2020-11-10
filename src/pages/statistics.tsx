@@ -2,8 +2,12 @@ import * as React from "react";
 import Head from "next/head";
 import { Listbox } from "@headlessui/react";
 import clsx from "clsx";
+import { GetServerSideProps } from "next";
+import { QueryCache } from "react-query";
+import { dehydrate } from "react-query/hydration";
 
 import { Popover, PieChart, EmptyFallback } from "@components/index";
+import { serverClient } from "@lib/client";
 import {
   MonthlyTopStatisticTuple,
   makePieChartData,
@@ -187,4 +191,17 @@ let MonthSelect = ({ months, value, onChange }: MonthSelectProps) => {
       )}
     </Listbox>
   );
+};
+
+export let getServerSideProps: GetServerSideProps = async ({ req }) => {
+  let queryCache = new QueryCache();
+
+  await queryCache.prefetchQuery("user", serverClient(req).me);
+  await queryCache.prefetchQuery("lists", serverClient(req).lists);
+
+  return {
+    props: {
+      dehydratedState: dehydrate(queryCache),
+    },
+  };
 };
