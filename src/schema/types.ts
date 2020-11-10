@@ -171,6 +171,7 @@ export let Query = objectType({
   definition(t) {
     t.field("me", {
       type: User,
+      authorize: (_parent, _args, context) => Boolean(context.user),
       resolve: (_parent, _args, context) =>
         context.user?.id
           ? context.prisma.user.findOne({
