@@ -125,21 +125,28 @@ let Signin = () => {
 
 export default Signin;
 
-export let getServerSideProps: GetServerSideProps = async ({ req, res }) => {
+export let getServerSideProps: GetServerSideProps = async ({ req }) => {
   let queryCache = new QueryCache();
+  let client = serverClient(req);
 
-  await queryCache.prefetchQuery("user", () => serverClient(req).me());
+  try {
+    let user = await client.me();
+    queryCache.setQueryData("user", user);
 
-  if (queryCache.getQueryData("user")) {
-    res.writeHead(302, {
-      Location: "/items",
-    });
-    res.end();
+    return {
+      props: {
+        dehydratedState: dehydrate(queryCache),
+      },
+      redirect: {
+        destination: "/items",
+        permanent: false,
+      },
+    };
+  } catch {
+    return {
+      props: {
+        dehydratedState: dehydrate(queryCache),
+      },
+    };
   }
-
-  return {
-    props: {
-      dehydratedState: dehydrate(queryCache),
-    },
-  };
 };

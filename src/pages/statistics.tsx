@@ -197,12 +197,25 @@ export let getServerSideProps: GetServerSideProps = async ({ req }) => {
   let queryCache = new QueryCache();
   let client = serverClient(req);
 
-  await queryCache.prefetchQuery("user", () => client.me());
-  await queryCache.prefetchQuery("lists", () => client.lists());
-
-  return {
-    props: {
-      dehydratedState: dehydrate(queryCache),
-    },
-  };
+  try {
+    let user = await client.me();
+    let items = await client.items();
+    queryCache.setQueryData("user", user);
+    queryCache.setQueryData("items", items);
+    return {
+      props: {
+        dehydratedState: dehydrate(queryCache),
+      },
+    };
+  } catch {
+    return {
+      props: {
+        dehydratedState: dehydrate(queryCache),
+      },
+      redirect: {
+        destination: "/signin",
+        permanent: false,
+      },
+    };
+  }
 };
